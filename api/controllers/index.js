@@ -4,17 +4,18 @@ const fileupload = require('./fileupload')
 const getTestimonial = async (req, res, next) => {
   try{
   const {id} =req.params;
-  console.log('id==== ',req.params)
   if(id){
     const result=await Testimonial.find({active:1, _id: id});
-    res.status(200).json(result);
+    res.status(200).json({result,success:true});
   }
   else{
   const result=await Testimonial.find({active:1});
   if (result.length >= 0) {
-    res.status(200).json(result);
+    res.status(200).json({result:result,success:true});
       } else {
           res.status(404).json({
+              success: false,
+              result:[],
               message: 'No entries found'
           });
       }
@@ -23,6 +24,9 @@ const getTestimonial = async (req, res, next) => {
 catch(err) {
   console.log(err);
   res.status(500).json({
+    success: false,
+    result:[],
+    message: "Internal Server Error",
     error: err
   });
 }
@@ -39,25 +43,15 @@ const createTestimonial= async(req, res, next) => {
   });
   const result = await testimonial.save();
   res.status(201).json({
-        message: "Created testimonial successfully",
-        createdTestimonial: {
-            name: result.name,
-            testimonialDesc: result.testimonialDesc,
-            postBy: result.postBy,
-            createdOn: result.price,
-            updatedOn: result.price,
-            _id: result._id,
-            image: result.image,
-            request: {
-                type: 'GET',
-                url: "http://localhost:3000/testinomial/" + result._id
-            }
-        }
+        message: "testimonial created successfully",
+        success:true
       });
 }
  catch(err){
       console.log(err);
       res.status(500).json({
+        message: "Internal Server Error",
+        success:false,
         error: err
       });
   }
@@ -69,17 +63,20 @@ const deleteTestinomial= async(req, res, next) => {
     if(id){
       const result= await Testimonial.updateOne({_id:id},{active:0,lastUpdatedOn:new Date()});
       if(result){
-        res.status(200).json({success:true,msg:'deleted Successfully'});
+        res.status(200).json({success:true,
+          msg:'deleted Successfully'});
       }
       else{
         res.status(404).json({
-          message: 'No entries found'
+          message: 'Record has not updated',
+          success: false
       });
       }
     }
     else{
       res.status(404).json({
-        message: 'Entires not found'
+        message: 'Entires not found',
+        success: false
     });
     }
   }
@@ -95,6 +92,7 @@ catch(err){
 const updatedTestnomial= async(req,res,next) =>{
   try{
   const {id}= req.params;
+  if(id){
   const updateOps = {};
  const body=  JSON.parse(JSON.stringify(req.body))
   for (ops in body) {
@@ -106,15 +104,21 @@ const updatedTestnomial= async(req,res,next) =>{
   const result= await Testimonial.update({ _id: id}, { $set: updateOps });
       res.status(200).json({
           message: 'Testimonial updated',
-          request: {
-              type: 'GET',
-              url: 'http://localhost:3000/testimonial/' + id
-          }
+          success: true
     });
+  }
+  else{
+    res.status(401).json({
+      message: 'No entries found',
+      success: false
+      })
+  }
   }
   catch(err){
     console.log(err);
     res.status(500).json({
+      message: 'Internal server error',
+      success:false,
       error: err
     });
 
